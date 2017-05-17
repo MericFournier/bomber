@@ -1,0 +1,48 @@
+body {
+   margin:0px;
+   padding:0px;
+}
+
+.game {
+   margin:0 auto;
+   border:1px solid black;
+   font-size:0px;
+   overflow:hidden;
+   position:relative;
+
+}
+.case {
+   border:1px solid #000000; 
+   box-sizing:border-box; 
+   display:inline-block;
+   font-size:12px;
+}
+.perso {
+   background-color:blue;
+   position:absolute;
+   z-index:999;
+   transition:100ms ease-in all;
+   border-radius:100%;
+}
+.bombe {
+   background-color:greenyellow;
+   position:absolute;
+   z-index:99;
+}
+.bombed {
+   animation-name: bombes;
+   animation-duration: 200ms;
+   animation-play-state: running;
+   animation-iteration-count: 5;
+   animation-timing-function: linear;
+}
+.bomb_item {
+   background-color:black;
+   position:absolute;
+}
+
+@keyframes bombes {
+   0%{background-color:yellow}
+   100%{background-color:#888815}
+   
+}
