@@ -24,6 +24,13 @@ body {
    transition:100ms ease-in all;
    border-radius:100%;
 }
+.adversaire {
+   background-color:blue;
+   position:absolute;
+   z-index:9999;
+   transition:50ms ease-in all;
+   border-radius:100%;
+}
 .bombe {
    background-color:greenyellow;
    position:absolute;
@@ -33,12 +40,24 @@ body {
    animation-name: bombes;
    animation-duration: 200ms;
    animation-play-state: running;
-   animation-iteration-count: 5;
+   animation-iteration-count: infinite;
    animation-timing-function: linear;
 }
 .bomb_item {
    background-color:black;
    position:absolute;
+}
+.str1 {
+   background:url(../img/str1.png);
+   background-size:cover;
+}
+.str2 {
+   background:url(../img/str2.png);
+   background-size:cover;
+}
+.str3 {
+   background:url(../img/str3.jpg);
+   background-size:cover;
 }
 
 @keyframes bombes {
