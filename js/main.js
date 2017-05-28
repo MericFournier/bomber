@@ -6,9 +6,10 @@ game.data.width                              = 15; // profondeur de ligne
 game.data.height                             = 15; // lignes 
 game.data.increment                          = 30; // taille bloc
 game.data.bombDelay                          = 1000; // délai explosion bombe
-game.data.bombDuration                       = 5000; // durée explosion
-game.data.bonusDelay                         = 5000; // durée d'affichage bonus
-game.data.prices = ['live','bomb'];
+game.data.bombDuration                       = 100; // durée explosion
+game.data.bonusDelay                         = 10000; // durée d'affichage bonus
+game.data.princeDelay                        = 1000;
+game.data.prices = ['live','bomb','point'];
 // gestion des éléments 
 game.elements                                = {}; 
 game.elements.area                           = {}
@@ -99,6 +100,7 @@ game.elements.area.wall                      = function () {
 
 }
 var player = function() {
+   this.bombing = 0;
    this.position = {};
    this.position.left = 0;
    this.position.top = 0;
@@ -123,17 +125,39 @@ var player = function() {
       if ( game.elements.area.case[this.position.top][this.position.left].case.getAttribute('bombed') > 0) {
          this.die();
       }
+      var bonus = game.elements.area.case[this.position.top][this.position.left].case.getAttribute('bonus');
+      if ( bonus == 1) {
+         this.live +=1;
+         this.score +=10;
+         game.elements.area.case[this.position.top][this.position.left].case.setAttribute('bonus',0);
+         game.methods.actualiseData();
+      }
+      if ( bonus == 2) {
+         this.bombStock +=1; 
+         this.score +=10;
+         game.elements.area.case[this.position.top][this.position.left].case.setAttribute('bonus',0);
+         game.methods.actualiseData();
+      }
+      if ( bonus == 3) {
+         this.score +=300; 
+         game.elements.area.case[this.position.top][this.position.left].case.setAttribute('bonus',0);
+         game.methods.actualiseData();
+      }
    }
    this.die = function(){
       //console.log('dead');
       this.position.top = 0;
       this.position.left = 0;
       this.setPosition(this.position.top,this.position.left);
+      this.live -= 1;
+      game.methods.actualiseData();
    }
-   this.bombStock = 0;
-   this.live = 5; 
+   this.bombStock = 1;
+   this.live = 5;
+   this.score = 0;
 }
 var adversaire = function() {
+   this.bombing = 0;
    this.position = {};
    this.position.left = game.data.width-1;
    this.position.top = game.data.height-1;
@@ -142,7 +166,6 @@ var adversaire = function() {
    this.object.style.width = game.data.increment+"px";
    this.object.style.height = game.data.increment+"px";
    this.init = function() {
-      console.log('adversaire');
       game.elements.area.container.append(this.object);
       this.position.top = game.data.height-1;
       this.position.left = game.data.width-1;
@@ -160,8 +183,26 @@ var adversaire = function() {
       //console.log(game.perso.top +' '+game.perso.left);
       this.object.style.top = top+"px";
       this.object.style.left = left+"px";
-      if ( game.elements.area.case[top][left].case.getAttribute('bombed') > 0) {
+      if ( game.elements.area.case[this.position.top][this.position.left].case.getAttribute('bombed') > 0) {
          this.die();
+      }
+      var bonus = game.elements.area.case[this.position.top][this.position.left].case.getAttribute('bonus');
+      if ( bonus == 1) {
+         this.live +=1;
+         this.score +=10; 
+         game.elements.area.case[this.position.top][this.position.left].case.setAttribute('bonus',0);
+         game.methods.actualiseData();
+      }
+      if ( bonus == 2) {
+         this.bombStock +=1;
+         this.score +=10; 
+         game.elements.area.case[this.position.top][this.position.left].case.setAttribute('bonus',0);
+         game.methods.actualiseData();
+      }
+      if ( bonus == 3) {
+         this.score +=300;  
+         game.elements.area.case[this.position.top][this.position.left].case.setAttribute('bonus',0);
+         game.methods.actualiseData();
       }
    }
    this.die = function(){
@@ -169,7 +210,13 @@ var adversaire = function() {
       this.position.top = game.data.height-1;
       this.position.left = game.data.width-1;
       this.setPosition(this.position.top,this.position.left);
+      this.live -= 1;
+      game.methods.actualiseData();
    }
+   this.live = 5;
+   this.bombStock = 1;
+   this.score = 0;
+   // ai 
    this.choices = [];
    this.ways = [];
    this.history = [];
@@ -204,12 +251,7 @@ var adversaire = function() {
       var random = Math.floor(Math.random()*this.ways.length);
       console.log('case interdite', this.forb);
       console.log('choix',this.ways[random]);
-      if ( this.forb.x == this.ways[random].x ) {
-         if ( this.forb.y == this.ways[random].y ) {
-            console.clear();
-            console.log('same');
-         }
-      }
+
       if ( this.ways[random] == this.forb) {
          console.log('same');
          return false;
@@ -249,12 +291,16 @@ var setBonus = function(top,left,type) {
    if ( type == 'bomb') {
       this.object.classList.add('supBomb');
    }
+   if ( type == 'point') {
+      this.object.classList.add('boostScore');
+   }
 
 }
 
 game.methods = {};
 game.methods.deplace                   = function() {
    document.onkeydown = function(event) {
+      event.preventDefault();
       if ( event.keyCode == 91) {
          game.adversaire.aiInit();
       }
@@ -422,11 +468,11 @@ game.methods.deplace                   = function() {
       }
       // 
       else if ( event.keyCode == 13 ){
-         //console.log('bomb');
-         game.methods.bomb(game.adversaire.position.top,game.adversaire.position.left); 
+         
+         game.methods.bomb(game.adversaire.position.top,game.adversaire.position.left,'adversaire'); 
       }
       else if ( event.keyCode == 32 ){
-         game.methods.bomb(game.perso.position.top,game.perso.position.left); 
+         game.methods.bomb(game.perso.position.top,game.perso.position.left,'perso'); 
       }
    }
 
@@ -435,36 +481,78 @@ game.methods.deplace();
 game.methods.setPrice = function() {
    var top = Math.floor(Math.random()*game.elements.area.case.length);
    var left = Math.floor(Math.random()*game.elements.area.case[top].length);
-   console.log(top,left);
-   console.log(game.elements.area.case[top][left].case);
+   //console.log(top,left);
+   //console.log(game.elements.area.case[top][left].case);
    if (game.elements.area.case[top][left].case.getAttribute('type')>0 ) {
-      console.log('pas possible');
+      //console.log('pas possible');
       return false; 
    }
    if (game.elements.area.case[top][left].case.getAttribute('bonus')>0 ) {
-      console.log('déjà une bombe');
+      //console.log('déjà une bombe');
       return false; 
    }
    var priceIndex = Math.floor(Math.random()*game.data.prices.length);
    var priceItem = game.data.prices[priceIndex];
-   
+
    if ( game.data.prices[priceIndex] == 'live') {
       game.elements.area.case[top][left].case.setAttribute('bonus',1);
    }
    else if ( game.data.prices[priceIndex] == 'bomb') {
       game.elements.area.case[top][left].case.setAttribute('bonus',2);
    }
-   console.log( game.data.prices[priceIndex]);
+   else if ( game.data.prices[priceIndex] == 'point') {
+      game.elements.area.case[top][left].case.setAttribute('bonus',3);
+   }
+   //console.log( game.data.prices[priceIndex]);
    var bonus = new setBonus(top,left,priceItem);
    game.elements.area.container.append(bonus.object);
-   
+
    setTimeout(function(){
       game.elements.area.container.removeChild(bonus.object);
       game.elements.area.case[top][left].case.setAttribute('bonus',0);
    }, game.data.bonusDelay);
 }
+setInterval(function(){ 
+   game.methods.setPrice();
+}, game.data.princeDelay);
 
-game.methods.bomb = function(top,left) {
+
+
+
+
+game.methods.bomb = function(top,left,origine) {
+   console.log(origine);
+   if ( origine == 'perso') {
+      if (game.perso.bombing == 1) {
+         if ( game.perso.bombStock > 0) {
+            game.perso.bombStock -= 1;
+            game.methods.actualiseData();
+            console.log('on retire une bombe')
+         }
+         else {
+            console.log('tu peux plus tirer')
+            return false;
+         }
+      }
+      else {
+         game.perso.bombing = 1;
+         console.log('on tire oklm')
+      }
+   }
+   
+   else if ( origine == 'adversaire') {
+      if (game.adversaire.bombing) {
+         if ( game.adversaire.bombStock > 0) {
+            game.adversaire.bombStock -= 1;
+         }
+         else {
+            return false;
+         }
+      }
+      else {
+         game.adversaire.bombing = 1;
+      }
+   }
    var selectDiv = {x:top,y:left};
    console.log(selectDiv);
    var touched = [];
@@ -542,13 +630,18 @@ game.methods.bomb = function(top,left) {
             touched[i].classList.add('case','str1');
             touched[i].setAttribute('bombed',0);
          }
+         if ( origine == 'perso') {
+            game.perso.bombing = 0;
+         }
+         else if ( origine == 'adversaire') {
+            game.adversaire.bombing = 0;
+         }
       }, game.data.bombDuration);
    }, game.data.bombDelay);
 
 }
 game.elements.area.init();
 game.elements.area.wall();
-
 
 game.perso = new player();
 game.perso.init();
@@ -557,6 +650,58 @@ game.adversaire = new adversaire();
 game.adversaire.init();
 
 
+game.methods.actualiseData = function() {
+
+
+   var coeur = ' <i class="fa fa-heart" aria-hidden="true"></i> '; 
+   var bomb = ' <i class="fa fa-bomb" aria-hidden="true"></i> ';
+
+   var player = {};
+   player.container = document.querySelector('.player');
+   player.coeur = player.container.querySelector('.live_list p');
+   player.bomb = player.container.querySelector('.bomb_list p');
+   player.score = player.container.querySelector('#score');
+
+   var ordi = {};
+   ordi.container = document.querySelector('.ordinateur');
+   ordi.coeur = ordi.container.querySelector('.live_list p');
+   ordi.bomb = ordi.container.querySelector('.bomb_list p');
+   ordi.score = ordi.container.querySelector('#score');
+   // actualise coeur joueur
+   if ( game.perso.live < 6) {
+      player.coeur.innerHTML = '';
+      for ( var i = 0; i<game.perso.live; i++) {
+         player.coeur.innerHTML +=(coeur);
+      }
+   }
+   // actualise bombe joueur
+   if ( game.perso.bombStock < 6) {
+      player.bomb.innerHTML = '';
+      for ( var i = 0; i<game.perso.bombStock; i++) {
+         player.bomb.innerHTML +=(bomb);
+      }
+   }
+   // actualise joueur score
+   player.score.innerHTML = game.perso.score;
+
+   // actualise coeur ordi
+   if ( game.adversaire.live < 6) {
+      ordi.coeur.innerHTML = '';
+      for ( var i = 0; i<game.adversaire.live; i++) {
+         ordi.coeur.innerHTML +=(coeur);
+      }
+   }
+   // actualise bombe ordi 
+   if ( game.adversaire.bombStock < 6) {
+      ordi.bomb.innerHTML = '';
+      for ( var i = 0; i<game.adversaire.bombStock; i++) {
+         ordi.bomb.innerHTML +=(bomb);
+      }
+   }
+   // actualise ordi score
+   ordi.score.innerHTML = game.adversaire.score;
+}
+game.methods.actualiseData();
 
 
 //game.adversaire.methods.init();

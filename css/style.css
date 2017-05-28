@@ -2,6 +2,7 @@ body {
    margin:0px;
    padding:0px;
    font-size:0px;
+   font-family:sans-serif;
 }
 
 .game {
@@ -90,4 +91,57 @@ body {
 }
 .supBomb {
    background-color:darkslategray;
+}
+.boostScore {
+   background-color:greenyellow;
+}
+
+.data { 
+   width:600px;
+   height:auto;
+   min-height:40px;
+   margin:10px auto;
+   font-size:0px;
+}
+
+.data .player, .data .ordinateur {
+   width:300px;
+   min-height:30px;
+   display:inline-block;
+   vertical-align:top;
+}
+.data .player{
+   background-color:lightsteelblue;
+}
+.data .ordinateur{
+   background-color:#b3bbc6;
+}
+
+.data .player h2, .data .ordinateur h2 {
+   font-size:15px;
+   text-align:center;
+   color:white;
+   text-transform:uppercase;
+   margin-bottom:30px;
+}
+.data .player p, .data .ordinateur p {
+   font-size:13px;
+   text-align:center;
+   color:white;
+   margin-bottom:30px;
+}
+.live_list i {
+   margin:10px 10px;
+   font-size:24px;
+   color:#ed253c;
+}
+.bomb_list i {
+   margin:10px 10px;
+   font-size:24px;
+   color:darkslategray;
+}
+
+span {
+   font-size:45px;
+   font-weight:bold;
 }
