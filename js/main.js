@@ -87,6 +87,7 @@ game.elements.area.wall                      = function () {
 
 
 
+
 var player = function() {
    this.position = {};
    this.position.left = 0;
@@ -102,6 +103,8 @@ var player = function() {
       this.setPosition(this.position.top,this.position.left);
    }
    this.setPosition = function(top,left) {
+      this.position.left = left;
+      this.position.top = top;
       top = top*game.data.increment;
       left = left*game.data.increment;
       //console.log(game.perso.top +' '+game.perso.left);
@@ -130,8 +133,14 @@ var adversaire = function() {
       this.position.top = game.data.height-1;
       this.position.left = game.data.width-1;
       this.setPosition(this.position.top,this.position.left);
+      if ( this.history.length > 1) {
+         this.history.push({x:this.position.x,y:this.position.y});
+      }
    }
    this.setPosition = function(top,left) {
+      this.position.left = left;
+      this.position.top = top;
+      this.history.push(game.elements.area.case[this.position.top][this.position.left]);
       top = top*game.data.increment;
       left = left*game.data.increment;
       //console.log(game.perso.top +' '+game.perso.left);
@@ -140,9 +149,53 @@ var adversaire = function() {
    }
    this.die = function(){
       //console.log('dead');
-      this.position.top = game.data.width-1;
+      this.position.top = game.data.height-1;
       this.position.left = game.data.width-1;
       this.setPosition(this.position.top,this.position.left);
+   }
+   this.choices = [];
+   this.ways = [];
+   this.history = [];
+   this.setChoices = function() 
+   {
+      if(game.elements.area.case[this.position.top+1]){
+         this.choices.push({x:this.position.top+1,y:this.position.left});
+      }
+      if(game.elements.area.case[this.position.top-1]){
+         this.choices.push({x:this.position.top-1,y:this.position.left});
+      }
+      if(game.elements.area.case[this.position.top][this.position.left+1]){
+         this.choices.push({x:this.position.top,y:this.position.left+1});
+      }  
+      if(game.elements.area.case[this.position.top][this.position.left-1]){
+         this.choices.push({x:this.position.top,y:this.position.left-1});
+      }
+      this.setWay();
+   }
+   this.setWay = function() {
+      for ( var i = 0; i<this.choices.length; i++) {
+         //console.log(this.choices[i]);
+         if (game.elements.area.case[this.choices[i].x][this.choices[i].y].case.getAttribute('type') != 2 ) {
+            this.ways.push(this.choices[i]);
+         }
+      }
+      //console.log(this.ways);
+      this.choose();
+   }
+   this.choose = function() {
+      var random = Math.floor(Math.random()*this.ways.length);
+      this.setPosition(this.ways[random].x,this.ways[random].y);
+      console.log('choix',this.ways[random],game.elements.area.case[this.ways[random].x][this.ways[random].y].case);
+      console.log(this.history);
+
+
+   }
+   this.aiInit = function() {
+      console.log('case de ou je viens ',this.history[this.history.length-1].case);
+      console.log(this.history);
+      this.choices = [];
+      this.ways = [];
+      this.setChoices();
    }
 }
 
@@ -157,145 +210,13 @@ var caseBlock = function() {
 
 
 
-game.ai = {};
-game.ai.choice = [];
-game.ai.way = [];
-game.ai.fuite = [];
-game.ai.history = [];  
-game.ai.init = function() {
-   //console.log('choice');
-   game.ai.choice = [];
-   game.ai.way = []; 
-
-   console.clear();
-   // case où on est 
-   console.log('case interdite :');
-   if (game.ai.history[game.ai.history.length-1] ) { 
-      console.log(game.ai.history[game.ai.history.length-1]);
-      console.log(game.elements.area.case[game.ai.history[game.ai.history.length-1].x][game.ai.history[game.ai.history.length-1].y]);
-   }
-   else {
-      console.log('aucune');
-   }
-
-
-   game.ai.history.push(game.adversaire.pos);
-   console.log('différents choix');
-
-   if (game.elements.area.case[game.adversaire.pos.x+1]) {
-      data = {x:game.adversaire.pos.x+1, y:game.adversaire.pos.y};
-      console.log('------');
-      console.log(data);
-      console.log(game.ai.history[game.ai.history.length-1]);
-      console.log('------');
-      if (data == game.ai.history[game.ai.history.length-1]) {
-         console.log('!!!!!!!!!!');
-         return false;
-      }
-      else {
-         //console.log(data);
-         game.ai.choice.push(data);
-      }
-   }
-   if (game.elements.area.case[game.adversaire.pos.x-1]) {
-      data = {x:game.adversaire.pos.x-1, y:game.adversaire.pos.y};
-      console.log('------');
-      console.log(data);
-      console.log(game.ai.history[game.ai.history.length-1]);
-      console.log('------');
-      if (data == game.ai.history[game.ai.history.length-1]) {
-         console.log('!!!!!!!!!!');
-         return false;
-      }
-      else {
-         //console.log(data);
-         game.ai.choice.push(data);
-      } 
-   }
-   if ( game.elements.area.case[game.adversaire.pos.x][game.adversaire.pos.y-1]) {
-      data = {x:game.adversaire.pos.x, y:game.adversaire.pos.y-1} ;
-      console.log('------');
-      console.log(data);
-      console.log(game.ai.history[game.ai.history.length-1]);
-      console.log('------');
-      if (data == game.ai.history[game.ai.history.length-1]) {
-         console.log('!!!!!!!!!!');
-         return false;
-      }
-      else {
-         //console.log(data);
-         game.ai.choice.push(data);
-      } 
-   }
-   if ( game.elements.area.case[game.adversaire.pos.x][game.adversaire.pos.y+1]) {
-      data = {x:game.adversaire.pos.x, y:game.adversaire.pos.y+1} ;
-      console.log('------');
-      console.log(data);
-      console.log(game.ai.history[game.ai.history.length-1]);
-      console.log('------');
-      if (data == game.ai.history[game.ai.history.length-1]) {
-         console.log('!!!!!!!!!!');
-         return false;
-      }
-      else {
-         //console.log(data);
-         game.ai.choice.push(data);
-      }
-   }
-   for ( var i = 0; i<game.ai.choice.length; i++) {
-      console.log(game.elements.area.case[game.ai.choice[i].x][game.ai.choice[i].y]);
-   }
-
-   // on regarde parmis les routes les quelles on peut emprunter 
-   for ( var i = 0; i<game.ai.choice.length; i++){
-      //console.log('choix : '+game.ai.choice[i].x+' '+game.ai.choice[i].y);
-      if ( game.elements.area.case[game.ai.choice[i].x][game.ai.choice[i].y].getAttribute('type') < 2) {
-         // console.log('on ajoute à way :'+game.ai.choice[i] );
-         game.ai.way.push(game.ai.choice[i]);
-      }
-   }
-
-
-
-
-   // parmis celles empruntables on en choisit une 
-   var random = Math.floor(Math.random()*game.ai.way.length);
-   console.log('case choisie :'); 
-   console.log(game.elements.area.case[game.ai.way[random].x][game.ai.way[random].y]);
-
-
-   // on regarde si la route choisi est vide 
-   var kind = parseInt(game.elements.area.case[game.ai.way[random].x][game.ai.way[random].y].getAttribute('type')); 
-   // si oui , on y va 
-   if ( kind == 0 ) {
-      game.adversaire.methods.position(game.ai.way[random].x,game.ai.way[random].y);
-   }
-
-   // ou on détruit la brique 
-   else {
-      game.bomb.methods.setBomb(game.adversaire.pos.x,game.adversaire.pos.y);
-   }
-   console.log('nouvelle case interdite');
-   console.log(game.elements.area.case[game.ai.history[game.ai.history.length-1].x][game.ai.history[game.ai.history.length-1].y]);
-
-
-
-
-
-
-
-}
-game.ai.selectDirection = function() {
-
-}
-game.ai.chooseDirection = function() {
-
-}
 // iappel func 
 game.methods = {};
 game.methods.deplace                   = function() {
    document.onkeydown = function(event) {
-
+      if ( event.keyCode == 91) {
+         game.adversaire.aiInit();
+      }
       if ( event.keyCode == 37) {
          //console.log('click');
          if ( game.perso.position.left == 0) {
@@ -549,6 +470,9 @@ game.methods.bomb = function(top,left) {
    }, game.data.bombDelay);
 
 }
+game.elements.area.init();
+game.elements.area.wall();
+
 
 game.perso = new player();
 game.perso.init();
@@ -556,8 +480,9 @@ game.perso.init();
 game.adversaire = new adversaire();
 game.adversaire.init();
 
-game.elements.area.init();
-game.elements.area.wall();
+
+
+
 //game.adversaire.methods.init();
 //game.perso.methods.init();
 //game.perso.methods.deplace();
@@ -568,3 +493,4 @@ game.elements.area.wall();
 //      game.ai.init();
 //   }
 //}
+
