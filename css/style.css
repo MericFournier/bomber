@@ -20,7 +20,7 @@ body {
 .perso {
    background-color:blue;
    position:absolute;
-   z-index:999;
+   z-index:999999;
    transition:100ms ease-in all;
    border-radius:100%;
 }
@@ -77,4 +77,17 @@ body {
    background:url(../img/fire.jpg);
    background-repeat:no-repeat;
    background-size:cover;
+}
+
+.bonus {
+   position:absolute;
+   z-index:999;
+   transition:50ms ease-in all;
+   border-radius:100%;
+}
+.live {
+   background-color:hotpink;
+}
+.supBomb {
+   background-color:darkslategray;
 }

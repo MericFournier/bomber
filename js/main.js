@@ -2,16 +2,19 @@ var game = {};
 // DONNÉES 
 game.data = {}; 
 game.data.numBlock                           = 300;
-game.data.width                              = 11; // profondeur de ligne 
-game.data.height                             = 21; // lignes 
+game.data.width                              = 15; // profondeur de ligne 
+game.data.height                             = 15; // lignes 
 game.data.increment                          = 30; // taille bloc
 game.data.bombDelay                          = 1000; // délai explosion bombe
-game.data.bombDuration                       = 500; // durée explosion 
+game.data.bombDuration                       = 5000; // durée explosion
+game.data.bonusDelay                         = 5000; // durée d'affichage bonus
+game.data.prices = ['live','bomb'];
 // gestion des éléments 
 game.elements                                = {}; 
 game.elements.area                           = {}
 game.elements.area.case                      = [];
 game.elements.area.briques                   = [];
+game.elements.area.wood                      = [];
 game.elements.area.container                 = document.querySelector('.game');
 game.elements.area.setVirtuel                = function() {
    for ( var i =0; i<game.data.height; i++) {
@@ -54,40 +57,47 @@ game.elements.area.wall                      = function () {
             game.elements.area.case[i][j].case.classList.remove('str1');
             game.elements.area.case[i][j].case.classList.add('str2');
             game.elements.area.case[i][j].case.setAttribute('type',1);
+            game.elements.area.wood.push(game.elements.area.case[i][j].case);
          }
          if ( i%2 == 0 && j%2 != 0 ) {
             //console.log(game.elements.area.case[i][j]);
             game.elements.area.case[i][j].case.classList.remove('str1');
             game.elements.area.case[i][j].case.classList.add('str2');
             game.elements.area.case[i][j].case.setAttribute('type',1);
+            game.elements.area.wood.push(game.elements.area.case[i][j].case);
          }
-
-         game.elements.area.case[0][1].case.classList.remove('str2');
-         game.elements.area.case[0][1].case.classList.add('str1');
-         game.elements.area.case[0][1].case.setAttribute('type',0);
-
-         game.elements.area.case[1][0].case.classList.remove('str2');
-         game.elements.area.case[1][0].case.classList.add('str1');
-         game.elements.area.case[1][0].case.setAttribute('type',0);
-
-         game.elements.area.case[game.data.height-2][game.data.width-1].case.classList.remove('str2');
-         game.elements.area.case[game.data.height-2][game.data.width-1].case.classList.add('str1');
-         game.elements.area.case[game.data.height-2][game.data.width-1].case.setAttribute('type',0);
-
-         game.elements.area.case[game.data.height-1][game.data.width-2].case.classList.remove('str2');
-         game.elements.area.case[game.data.height-1][game.data.width-2].case.classList.add('str1');
-         game.elements.area.case[game.data.height-1][game.data.width-2].case.setAttribute('type',0);
-
-
-
       }  
    }
+   game.elements.area.case[0][1].case.classList.remove('str2');
+   game.elements.area.case[0][1].case.classList.add('str1');
+   game.elements.area.case[0][1].case.setAttribute('type',0);
+
+   game.elements.area.case[1][0].case.classList.remove('str2');
+   game.elements.area.case[1][0].case.classList.add('str1');
+   game.elements.area.case[1][0].case.setAttribute('type',0);
+
+   game.elements.area.case[game.data.height-2][game.data.width-1].case.classList.remove('str2');
+   game.elements.area.case[game.data.height-2][game.data.width-1].case.classList.add('str1');
+   game.elements.area.case[game.data.height-2][game.data.width-1].case.setAttribute('type',0);
+
+   game.elements.area.case[game.data.height-1][game.data.width-2].case.classList.remove('str2');
+   game.elements.area.case[game.data.height-1][game.data.width-2].case.classList.add('str1');
+   game.elements.area.case[game.data.height-1][game.data.width-2].case.setAttribute('type',0);
+
+   var removed = game.elements.area.wood.splice(0, 1);
+   var removed = game.elements.area.wood.splice(game.elements.area.wood.length-1, 1);
+   console.log('removed',removed);
+   console.log('tab',game.elements.area.wood);
+
+
+   for ( var i = 0; i<game.elements.area.wood.length/3; i++ ) {
+      var random = Math.floor(Math.random()*game.elements.area.wood.length);
+      game.elements.area.wood[random].classList.remove('str2');
+      game.elements.area.wood[random].classList.add('str3');
+      game.elements.area.wood[random].setAttribute('type','2');
+   }
+
 }
-
-
-
-
-
 var player = function() {
    this.position = {};
    this.position.left = 0;
@@ -110,6 +120,9 @@ var player = function() {
       //console.log(game.perso.top +' '+game.perso.left);
       this.object.style.top = top+"px";
       this.object.style.left = left+"px";
+      if ( game.elements.area.case[this.position.top][this.position.left].case.getAttribute('bombed') > 0) {
+         this.die();
+      }
    }
    this.die = function(){
       //console.log('dead');
@@ -117,8 +130,9 @@ var player = function() {
       this.position.left = 0;
       this.setPosition(this.position.top,this.position.left);
    }
+   this.bombStock = 0;
+   this.live = 5; 
 }
-
 var adversaire = function() {
    this.position = {};
    this.position.left = game.data.width-1;
@@ -134,18 +148,21 @@ var adversaire = function() {
       this.position.left = game.data.width-1;
       this.setPosition(this.position.top,this.position.left);
       if ( this.history.length > 1) {
-         this.history.push({x:this.position.x,y:this.position.y});
+         this.history.push({x:this.position.top,y:this.position.left});
       }
    }
    this.setPosition = function(top,left) {
       this.position.left = left;
       this.position.top = top;
-      this.history.push(game.elements.area.case[this.position.top][this.position.left]);
+      this.history.push({x:this.position.top,y:this.position.left});
       top = top*game.data.increment;
       left = left*game.data.increment;
       //console.log(game.perso.top +' '+game.perso.left);
       this.object.style.top = top+"px";
       this.object.style.left = left+"px";
+      if ( game.elements.area.case[top][left].case.getAttribute('bombed') > 0) {
+         this.die();
+      }
    }
    this.die = function(){
       //console.log('dead');
@@ -156,6 +173,7 @@ var adversaire = function() {
    this.choices = [];
    this.ways = [];
    this.history = [];
+   this.forb = '';
    this.setChoices = function() 
    {
       if(game.elements.area.case[this.position.top+1]){
@@ -184,6 +202,18 @@ var adversaire = function() {
    }
    this.choose = function() {
       var random = Math.floor(Math.random()*this.ways.length);
+      console.log('case interdite', this.forb);
+      console.log('choix',this.ways[random]);
+      if ( this.forb.x == this.ways[random].x ) {
+         if ( this.forb.y == this.ways[random].y ) {
+            console.clear();
+            console.log('same');
+         }
+      }
+      if ( this.ways[random] == this.forb) {
+         console.log('same');
+         return false;
+      }
       this.setPosition(this.ways[random].x,this.ways[random].y);
       console.log('choix',this.ways[random],game.elements.area.case[this.ways[random].x][this.ways[random].y].case);
       console.log(this.history);
@@ -191,31 +221,45 @@ var adversaire = function() {
 
    }
    this.aiInit = function() {
-      console.log('case de ou je viens ',this.history[this.history.length-1].case);
-      console.log(this.history);
+      this.forb = this.history[this.history.length-2];
       this.choices = [];
       this.ways = [];
       this.setChoices();
    }
 }
-
 var caseBlock = function() {
    this.case = document.createElement('div');
    this.case.style.width = game.data.increment+"px";
    this.case.style.height = game.data.increment+"px";
    this.case.classList.add('case');
    this.case.classList.add('str1');
+   this.case.setAttribute('bonus',0);
 }
 
+var setBonus = function(top,left,type) {
+   this.object = document.createElement('div');
+   this.object.classList.add('bonus');
+   this.object.style.width = game.data.increment+"px";
+   this.object.style.height = game.data.increment+"px";
+   this.object.style.top = top*game.data.increment+"px";
+   this.object.style.left = left*game.data.increment+"px";
+   if ( type == 'live') {
+      this.object.classList.add('live');
+   }
+   if ( type == 'bomb') {
+      this.object.classList.add('supBomb');
+   }
 
+}
 
-
-// iappel func 
 game.methods = {};
 game.methods.deplace                   = function() {
    document.onkeydown = function(event) {
       if ( event.keyCode == 91) {
          game.adversaire.aiInit();
+      }
+      if ( event.keyCode == 18) {
+         game.methods.setPrice();
       }
       if ( event.keyCode == 37) {
          //console.log('click');
@@ -388,6 +432,37 @@ game.methods.deplace                   = function() {
 
 }
 game.methods.deplace();
+game.methods.setPrice = function() {
+   var top = Math.floor(Math.random()*game.elements.area.case.length);
+   var left = Math.floor(Math.random()*game.elements.area.case[top].length);
+   console.log(top,left);
+   console.log(game.elements.area.case[top][left].case);
+   if (game.elements.area.case[top][left].case.getAttribute('type')>0 ) {
+      console.log('pas possible');
+      return false; 
+   }
+   if (game.elements.area.case[top][left].case.getAttribute('bonus')>0 ) {
+      console.log('déjà une bombe');
+      return false; 
+   }
+   var priceIndex = Math.floor(Math.random()*game.data.prices.length);
+   var priceItem = game.data.prices[priceIndex];
+   
+   if ( game.data.prices[priceIndex] == 'live') {
+      game.elements.area.case[top][left].case.setAttribute('bonus',1);
+   }
+   else if ( game.data.prices[priceIndex] == 'bomb') {
+      game.elements.area.case[top][left].case.setAttribute('bonus',2);
+   }
+   console.log( game.data.prices[priceIndex]);
+   var bonus = new setBonus(top,left,priceItem);
+   game.elements.area.container.append(bonus.object);
+   
+   setTimeout(function(){
+      game.elements.area.container.removeChild(bonus.object);
+      game.elements.area.case[top][left].case.setAttribute('bonus',0);
+   }, game.data.bonusDelay);
+}
 
 game.methods.bomb = function(top,left) {
    var selectDiv = {x:top,y:left};
@@ -447,6 +522,7 @@ game.methods.bomb = function(top,left) {
          }
          touched[i].classList='';
          touched[i].classList.add('case','bombed');
+         touched[i].setAttribute('bombed',1);
       }
       for ( var i = 0; i<virtuals.length; i++) {
          if ( virtuals[i].x == game.perso.position.top && virtuals[i].y == game.perso.position.left ) {
