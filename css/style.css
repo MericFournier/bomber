@@ -1,6 +1,7 @@
 body {
    margin:0px;
    padding:0px;
+   font-size:0px;
 }
 
 .game {
@@ -15,7 +16,6 @@ body {
    border:1px solid #000000; 
    box-sizing:border-box; 
    display:inline-block;
-   font-size:12px;
 }
 .perso {
    background-color:blue;
@@ -33,8 +33,6 @@ body {
 }
 .bombe {
    background-color:greenyellow;
-   position:absolute;
-   z-index:99;
 }
 .bombed {
    animation-name: bombes;
@@ -43,10 +41,7 @@ body {
    animation-iteration-count: infinite;
    animation-timing-function: linear;
 }
-.bomb_item {
-   background-color:black;
-   position:absolute;
-}
+
 .str1 {
    background:url(../img/str1.png);
    background-size:cover;
@@ -60,8 +55,26 @@ body {
    background-size:cover;
 }
 
+
 @keyframes bombes {
    0%{background-color:yellow}
    100%{background-color:#888815}
    
+}
+
+
+.bombTarget {
+   background: url(../img/bomb.png);
+   background-size:cover;
+   background-repeat:no-repeat;
+   animation-name: bombes;
+   animation-duration: 200ms;
+   animation-play-state: running;
+   animation-iteration-count: infinite;
+   animation-timing-function: linear;
+}
+.bombed {
+   background:url(../img/fire.jpg);
+   background-repeat:no-repeat;
+   background-size:cover;
 }
